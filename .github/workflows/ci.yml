@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Testing on ${{matrix.os}}
+    name: Testing with ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
