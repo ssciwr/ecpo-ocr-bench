@@ -26,7 +26,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
+    "click",
+    "levenshtein",
 ]
+
+[project.scripts]
+copy_sds_data = "ecpo_ocr_bench.__main__:copy_sds_data"
 
 [project.optional-dependencies]
 tests = [
