@@ -28,6 +28,8 @@ classifiers = [
 dependencies = [
     "click",
     "levenshtein",
+    "matplotlib",
+    "numpy",
 ]
 
 [project.scripts]

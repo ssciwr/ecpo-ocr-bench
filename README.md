@@ -2,8 +2,6 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ssciwr/ecpo-ocr-bench/ci.yml?branch=main)](https://github.com/ssciwr/ecpo-ocr-bench/actions/workflows/ci.yml)
-[![Documentation Status](https://readthedocs.org/projects/ecpo-ocr-bench/badge/)](https://ecpo-ocr-bench.readthedocs.io/)
-[![codecov](https://codecov.io/gh/ssciwr/ecpo-ocr-bench/branch/main/graph/badge.svg)](https://codecov.io/gh/ssciwr/ecpo-ocr-bench)
 
 ## Installation
 
