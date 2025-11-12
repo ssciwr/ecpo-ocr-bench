@@ -20,7 +20,7 @@ def normalize(s: str) -> str:
 
 
 def normalize_ground_truth(filename: pathlib.Path) -> str:
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         return normalize(f.read())
 
 
@@ -31,7 +31,7 @@ def evaluate_ocr_tool(
     result = {}
     pairs = list(generate_image_gt_pairs(data_dir))
     for image, gt in tqdm.tqdm(pairs):
-        original_ocr_result = function(image.stem)
+        original_ocr_result = function(image)
         normalized_ocr_result = normalize(original_ocr_result)
         ground_truth = normalize_ground_truth(gt)
         editops = Levenshtein.editops(normalized_ocr_result, ground_truth)

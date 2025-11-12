@@ -25,7 +25,7 @@ def run_deepseek_ocr(image: pathlib.Path):
     with tempfile.TemporaryDirectory() as tmp:
         model.infer(
             tokenizer,
-            prompt="<image>\nOCR this image.",
+            prompt="<image>\nOCR this image. Do not repeat text.",
             image_file=image,
             output_path=tmp,
             crop_mode=False,
@@ -33,7 +33,7 @@ def run_deepseek_ocr(image: pathlib.Path):
             test_compress=False,
         )
 
-        with open(tmp / "result.mmd", "r") as f:
+        with open(pathlib.Path(tmp) / "result.mmd", "r", encoding="utf-8") as f:
             return f.read()
 
 
