@@ -4,6 +4,7 @@ import Levenshtein
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
+import tqdm
 
 
 def generate_image_gt_pairs(data_dir: pathlib.Path):
@@ -19,7 +20,7 @@ def normalize(s: str) -> str:
 
 
 def normalize_ground_truth(filename: pathlib.Path) -> str:
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         return normalize(f.read())
 
 
@@ -28,8 +29,9 @@ def evaluate_ocr_tool(
     data_dir: pathlib.Path = pathlib.Path(__file__).resolve().parent.parent / "data",
 ):
     result = {}
-    for image, gt in generate_image_gt_pairs(data_dir):
-        original_ocr_result = function(image.stem)
+    pairs = list(generate_image_gt_pairs(data_dir))
+    for image, gt in tqdm.tqdm(pairs):
+        original_ocr_result = function(image)
         normalized_ocr_result = normalize(original_ocr_result)
         ground_truth = normalize_ground_truth(gt)
         editops = Levenshtein.editops(normalized_ocr_result, ground_truth)
