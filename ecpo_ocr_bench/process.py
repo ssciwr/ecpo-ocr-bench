@@ -1,5 +1,6 @@
 from typing import Callable
 
+import functools
 import Levenshtein
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,17 +16,44 @@ def generate_image_gt_pairs(data_dir: pathlib.Path):
         yield (image, gt)
 
 
-def normalize(s: str) -> str:
-    return (
-        s.replace("<lb/>", "")
-        .replace("\n", "")
-        .replace(" ", "")
-        .replace("e", "")
-        .replace("&gaiji;", "¤")
+@functools.lru_cache()
+def modern_character_replacement_dict():
+    """Load our replacements into a dictionary."""
+
+    with open(pathlib.Path(__file__).parent / "replacements.txt", "r") as f:
+        return {l[0]: l[1] for l in f.readlines()}
+
+
+def normalize(s: str, normalize_punctuation=True, normalize_modern_chars=True) -> str:
+    # These are some replacement that we specifically apply to our
+    # groundtruth to remove conventions of that ground truth annotation.
+    s = s.replace("<lb/>", "").replace("e", "").replace("c", "").replace("&gaiji;", "¤")
+
+    # Here are some replacements that we unconditionally apply.
+    s = (
+        s.replace(" ", "")  # We are not interested in whitespace detection
+        .replace("︵", "（")  # Round brackets pointing up and down were
+        .replace("︶", "）")  # not known to Matthias and are not in the GT
     )
 
+    if normalize_punctuation:
+        s = (
+            s.replace("『", "「")  # The "quotation marks" do not really matter to
+            .replace("』", "」")  # us, so we unconditionally harmonize them.
+            .replace("、", "，")  # We harmonize the idiographic commata
+        )
 
-def normalize_ground_truth(filename: pathlib.Path) -> str:
+    if normalize_modern_chars:
+        for old, new in modern_character_replacement_dict().items():
+            s = s.replace(old, new)
+
+    # At the very end - strip the final newline character
+    s = s.strip()
+
+    return s
+
+
+def load_ground_truth(filename: pathlib.Path) -> str:
     with open(filename, "r", encoding="utf-8") as f:
         return normalize(f.read())
 
@@ -39,7 +67,7 @@ def evaluate_ocr_tool(
     for image, gt in tqdm.tqdm(pairs):
         original_ocr_result = function(image)
         normalized_ocr_result = normalize(original_ocr_result)
-        ground_truth = normalize_ground_truth(gt)
+        ground_truth = load_ground_truth(gt)
         editops = Levenshtein.editops(normalized_ocr_result, ground_truth)
 
         # Filter out those edit-ops that replace against a character not in the encoding set
