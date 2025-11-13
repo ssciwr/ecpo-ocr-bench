@@ -1,7 +1,35 @@
 from ecpo_ocr_bench.data import copy_data
+from ecpo_ocr_bench.process import rerun_evaluate_ocr_tool
 
+import json
 import click
 import pathlib
+import shutil
+
+
+@click.command()
+@click.argument(
+    "results",
+    type=click.Path(
+        path_type=pathlib.Path,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        resolve_path=True,
+    ),
+    required=True,
+)
+def update_analysis(results):
+    # Make a backup copy of the data, so that we never lose valuable OCR
+    # results due to a malformed analysis script.
+    shutil.copy(results, results.parent / (results.name + ".bkp"))
+
+    # Load the data
+    with open(results, "r") as f:
+        data = json.load(f)
+
+    with open(results, "w") as f:
+        json.dump(rerun_evaluate_ocr_tool(data), f)
 
 
 @click.command()

@@ -34,7 +34,8 @@ dependencies = [
 ]
 
 [project.scripts]
-copy_sds_data = "ecpo_ocr_bench.__main__:copy_sds_data"
+ecpo_copy_sds_data = "ecpo_ocr_bench.__main__:copy_sds_data"
+ecpo_update_analysis = "ecpo_ocr_bench.__main__:update_analysis"
 
 [project.optional-dependencies]
 tests = [
