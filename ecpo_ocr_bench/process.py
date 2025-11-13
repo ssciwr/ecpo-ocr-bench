@@ -74,6 +74,22 @@ def evaluate_ocr_tool(
     return result
 
 
+def rerun_evaluate_ocr_tool(
+    previous_results,
+    data_dir: pathlib.Path = pathlib.Path(__file__).resolve().parent.parent / "data",
+):
+    """Redoes the analysis, if our analysis code changed.
+
+    Valueable if we are still tweaking the code and want to avoid running
+    costly OCR steps.
+    """
+
+    def func(image):
+        return previous_results[image.stem]["original_ocr_result"]
+
+    return evaluate_ocr_tool(func, data_dir)
+
+
 def error_localization_histogram(data: dict):
     # Extract the data for the histogram
     histdata = sum(
