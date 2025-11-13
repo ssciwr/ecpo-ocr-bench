@@ -16,7 +16,13 @@ def generate_image_gt_pairs(data_dir: pathlib.Path):
 
 
 def normalize(s: str) -> str:
-    return s.replace("<lb/>", "").replace("\n", "").replace(" ", "").replace("e", "")
+    return (
+        s.replace("<lb/>", "")
+        .replace("\n", "")
+        .replace(" ", "")
+        .replace("e", "")
+        .replace("&gaiji;", "¤")
+    )
 
 
 def normalize_ground_truth(filename: pathlib.Path) -> str:
@@ -35,6 +41,13 @@ def evaluate_ocr_tool(
         normalized_ocr_result = normalize(original_ocr_result)
         ground_truth = normalize_ground_truth(gt)
         editops = Levenshtein.editops(normalized_ocr_result, ground_truth)
+
+        # Filter out those edit-ops that replace against a character not in the encoding set
+        editops = [
+            (o, s, d)
+            for o, s, d in editops
+            if not ((o == "replace") and (ground_truth[d] == "¤"))
+        ]
 
         result[image.stem] = {
             "original_ocr_result": original_ocr_result,
