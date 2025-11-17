@@ -24,7 +24,13 @@ def modern_character_replacement_dict():
         return {l[0]: l[1] for l in f.readlines()}
 
 
-def normalize(s: str, normalize_punctuation=True, normalize_modern_chars=True) -> str:
+def normalize(
+    s: str,
+    normalize_punctuation=True,
+    normalize_modern_chars=True,
+    ignore_linebreaks=False,
+    ignore_punctuation=False,
+) -> str:
     # These are some replacement that we specifically apply to our
     # groundtruth to remove conventions of that ground truth annotation.
     s = s.replace("<lb/>", "").replace("e", "").replace("c", "").replace("&gaiji;", "¤")
@@ -32,8 +38,10 @@ def normalize(s: str, normalize_punctuation=True, normalize_modern_chars=True) -
     # Here are some replacements that we unconditionally apply.
     s = (
         s.replace(" ", "")  # We are not interested in whitespace detection
+        .replace("　", "")
         .replace("︵", "（")  # Round brackets pointing up and down were
         .replace("︶", "）")  # not known to Matthias and are not in the GT
+        .replace("｜", "－")  # Assuming this is the same problem
     )
 
     if normalize_punctuation:
@@ -41,7 +49,17 @@ def normalize(s: str, normalize_punctuation=True, normalize_modern_chars=True) -
             s.replace("『", "「")  # The "quotation marks" do not really matter to
             .replace("』", "」")  # us, so we unconditionally harmonize them.
             .replace("、", "，")  # We harmonize the idiographic commata
+            .replace("(", "（")
+            .replace(")", "）")
+            .replace(",", "，")
         )
+
+    if ignore_linebreaks:
+        s = s.replace("\n", "")
+
+    if ignore_punctuation:
+        for p in "『』「」、，()（）,。．一—：；⋯！":
+            s = s.replace(p, "")
 
     if normalize_modern_chars:
         for old, new in modern_character_replacement_dict().items():
@@ -55,26 +73,39 @@ def normalize(s: str, normalize_punctuation=True, normalize_modern_chars=True) -
 
 def load_ground_truth(filename: pathlib.Path) -> str:
     with open(filename, "r", encoding="utf-8") as f:
-        return normalize(f.read())
+        return f.read()
 
 
 def evaluate_ocr_tool(
     function: Callable[[pathlib.Path], str],
     data_dir: pathlib.Path = pathlib.Path(__file__).resolve().parent.parent / "data",
+    normalize_punctuation=True,
+    normalize_modern_chars=True,
+    ignore_linebreaks=False,
+    ignore_punctuation=False,
 ):
+    def _norm(s):
+        return normalize(
+            s,
+            normalize_punctuation=normalize_punctuation,
+            normalize_modern_chars=normalize_modern_chars,
+            ignore_linebreaks=ignore_linebreaks,
+            ignore_punctuation=ignore_punctuation,
+        )
+
     result = {}
     pairs = list(generate_image_gt_pairs(data_dir))
     for image, gt in tqdm.tqdm(pairs):
         original_ocr_result = function(image)
-        normalized_ocr_result = normalize(original_ocr_result)
-        ground_truth = load_ground_truth(gt)
+        normalized_ocr_result = _norm(original_ocr_result)
+        ground_truth = _norm(load_ground_truth(gt))
         editops = Levenshtein.editops(normalized_ocr_result, ground_truth)
 
         # Filter out those edit-ops that replace against a character not in the encoding set
         editops = [
             (o, s, d)
             for o, s, d in editops
-            if not ((o == "replace") and (ground_truth[d] == "¤"))
+            if not (((o == "replace") or (o == "insert")) and (ground_truth[d] == "¤"))
         ]
 
         result[image.stem] = {
@@ -93,10 +124,10 @@ def evaluate_ocr_tool(
                     [normalized_ocr_result[src], ground_truth[dst]]
                 )
             if op == "insert":
-                result[image.stem]["editops"]["insertions"].append([ground_truth[dst]])
+                result[image.stem]["editops"]["insertions"].append(ground_truth[dst])
             if op == "delete":
                 result[image.stem]["editops"]["deletions"].append(
-                    [normalized_ocr_result[src]]
+                    normalized_ocr_result[src]
                 )
 
     return result
