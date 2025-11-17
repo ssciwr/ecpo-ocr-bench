@@ -13,8 +13,6 @@ repos:
       - id: check-yaml
       # Trim trailing whitespace of all sorts
       - id: trailing-whitespace
-      # Apply a file size limit of 500kB
-      - id: check-added-large-files
       # Simple parser validation of e.g. pyproject.toml
       - id: check-toml
       # Unify file endings
@@ -25,3 +23,11 @@ repos:
     rev: v1.6.25
     hooks:
       - id: actionlint
+
+  # Make sure that Jupyter notebooks under version control
+  # have their outputs stripped before committing
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
