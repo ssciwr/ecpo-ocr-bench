@@ -1,3 +1,4 @@
+from PIL import Image
 from typing import Callable
 
 import functools
@@ -108,6 +109,8 @@ def evaluate_ocr_tool(
             if not (((o == "replace") or (o == "insert")) and (ground_truth[d] == "¤"))
         ]
 
+        width, height = Image.open(image).size
+
         result[image.stem] = {
             "original_ocr_result": original_ocr_result,
             "normalized_ocr_result": normalized_ocr_result,
@@ -115,6 +118,8 @@ def evaluate_ocr_tool(
             "distance": len(editops),
             "editops": {"replacements": [], "deletions": [], "insertions": []},
             "error_positions": [],
+            "width": width,
+            "height": height,
         }
 
         for op, src, dst in editops:
